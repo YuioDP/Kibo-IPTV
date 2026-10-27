@@ -19,4 +19,3 @@ Si falla, copia el error del registro de la ejecución.
 - La app instalada se llama **Kibo IPTV** y usa el mismo icono.
 - En Android TV aparece en el menú de apps (banner incluido) y se maneja con el control remoto.
 - En el teléfono funciona en horizontal y con toques: tocar elige, mantener pulsado marca favorito, arrastrar desplaza listas.
-
