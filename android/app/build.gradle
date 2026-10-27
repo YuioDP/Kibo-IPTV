@@ -1,0 +1,51 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.kibo.iptv'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.kibo.iptv'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+        // 64 bits (arm64) para teléfonos modernos; x86_64 solo para emuladores
+        ndk { abiFilters 'arm64-v8a', 'x86_64' }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('kibo.jks')
+            storePassword 'kibo-iptv-2026'
+            keyAlias 'kibo'
+            keyPassword 'kibo-iptv-2026'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    def media3 = '1.5.1'
+    implementation "androidx.media3:media3-exoplayer:$media3"
+    implementation "androidx.media3:media3-exoplayer-hls:$media3"
+    implementation "androidx.media3:media3-ui:$media3"
+}
