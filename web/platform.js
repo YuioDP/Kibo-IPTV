@@ -2,8 +2,11 @@
 (function(){
 var K=window.KiboNative;if(!K)return;
 var hs=document.documentElement.style;hs.width='100%';hs.height='100%';hs.overflow='hidden';hs.background='transparent';
-function fit(){var W=innerWidth,H=innerHeight,s=Math.min(W/1920,H/1080),b=document.body.style;b.transformOrigin='0 0';b.transform='scale('+s+')';b.position='absolute';b.left=(W-1920*s)/2+'px';b.top=(H-1080*s)/2+'px';window.__fit={s:s,ox:(W-1920*s)/2,oy:(H-1080*s)/2}}
-addEventListener('resize',fit);fit();
+var D=null;
+function fit(){var W=D?D.w:innerWidth,H=D?D.h:innerHeight,s=Math.min(W/1920,H/1080),b=document.body.style;b.transformOrigin='0 0';b.transform='scale('+s+')';b.position='absolute';b.left=(W-1920*s)/2+'px';b.top=(H-1080*s)/2+'px';window.__fit={s:s,ox:(W-1920*s)/2,oy:(H-1080*s)/2}}
+addEventListener('resize',fit);addEventListener('orientationchange',fit);addEventListener('load',fit);fit();[60,300,900,2500].forEach(function(t){setTimeout(fit,t)});
+window.__dim=function(w,h){D={w:w,h:h};fit()};
+document.documentElement.classList.add('android');if(!K.isTv())document.documentElement.classList.add('phone');
 window.__k=function(c){document.dispatchEvent(new KeyboardEvent('keydown',{keyCode:c,bubbles:true}))};
 var hid=false;try{Object.defineProperty(document,'hidden',{configurable:true,get:function(){return hid}})}catch(e){}
 window.__vis=function(v){hid=!v;document.dispatchEvent(new Event('visibilitychange'))};
@@ -15,6 +18,7 @@ window.__av=function(t,a,b){
  else if(t=='be'){L.onbufferingcomplete&&L.onbufferingcomplete()}
  else if(t=='time'){L.oncurrentplaytime&&L.oncurrentplaytime(a)}
  else if(t=='end'){L.onstreamcompleted&&L.onstreamcompleted()}
+ else if(t=='trk'){window.__trk&&window.__trk()}
  else if(t=='sub'){L.onsubtitlechange&&L.onsubtitlechange(String(a),b,'0',[])}};
 var a={
  open:function(u){K.open(u)},

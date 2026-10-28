@@ -19,3 +19,12 @@ Si falla, copia el error del registro de la ejecución.
 - La app instalada se llama **Kibo IPTV** y usa el mismo icono.
 - En Android TV aparece en el menú de apps (banner incluido) y se maneja con el control remoto.
 - En el teléfono funciona en horizontal y con toques: tocar elige, mantener pulsado marca favorito, arrastrar desplaza listas.
+
+## Novedades de esta versión (Android)
+- La interfaz se ajusta sola al tamaño real de la pantalla (también al abrir/cerrar el teclado).
+- En el teléfono: botón Atrás en pantalla, barra de desplazamiento arrastrable en las listas, barra de progreso táctil
+  y doble toque a izquierda/derecha para retroceder/adelantar (los segundos de Ajustes).
+- Decodificador FFmpeg de Jellyfin (AC3, EAC3, DTS...) para que se oigan y listen las pistas de audio que el teléfono no decodifica.
+  Ese componente tiene licencia GPLv3: está bien para uso personal; si compartes el APK públicamente, revisa esa licencia.
+- Imagen en imagen: al salir de la app con algo reproduciéndose, el video sigue en una ventana flotante
+  (se activa/desactiva en Ajustes > "Imagen en imagen al salir de la app").

@@ -1,6 +1,7 @@
 package com.kibo.iptv;
 
 import android.app.Activity;
+import android.app.PictureInPictureParams;
 import android.app.UiModeManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -8,7 +9,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Rational;
 import android.view.KeyEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -16,6 +19,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 import androidx.media3.common.C;
@@ -25,13 +29,14 @@ import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.common.Tracks;
+import androidx.media3.common.VideoSize;
 import androidx.media3.common.text.Cue;
 import androidx.media3.common.text.CueGroup;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.DefaultLoadControl;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
-import androidx.media3.ui.PlayerView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,19 +47,25 @@ import java.util.List;
 
 /**
  * Kibo IPTV (Android): la interfaz web (assets/www) va dentro de un WebView transparente
- * y el video lo dibuja ExoPlayer (Media3) por debajo, igual que AVPlay en Samsung.
+ * y el video lo dibuja ExoPlayer (Media3) en una SurfaceView por debajo, igual que AVPlay en Samsung.
  */
 public class MainActivity extends Activity {
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private FrameLayout root;
-    private PlayerView pv;
+    private SurfaceView sv;
     private WebView web;
     private ExoPlayer pl;
 
     private boolean tv;
     private boolean prepared;
     private int bufSec = 0;
+    private boolean pipOn = true;
+    private boolean inPip = false;
+
+    // zona de video pedida por la interfaz (píxeles) y tamaño real del video
+    private int rx = 0, ry = 0, rw = 1, rh = 1;
+    private int vw = 0, vh = 0;
 
     private volatile String stateStr = "IDLE";
     private volatile boolean pwr = false;
@@ -83,17 +94,17 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
 
-        pv = new PlayerView(this);
-        pv.setUseController(false);
-        pv.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER);
-        View sv = pv.getSubtitleView();
-        if (sv != null) sv.setVisibility(View.GONE); // los subtítulos los dibuja la interfaz web
-        pv.setLayoutParams(new FrameLayout.LayoutParams(1, 1));
-        pv.setVisibility(View.INVISIBLE);
-        root.addView(pv);
+        sv = new SurfaceView(this);
+        sv.setLayoutParams(new FrameLayout.LayoutParams(1, 1));
+        sv.setVisibility(View.INVISIBLE);
+        root.addView(sv);
 
         web = new WebView(this);
         web.setBackgroundColor(Color.TRANSPARENT);
+        web.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        web.setVerticalScrollBarEnabled(false);
+        web.setHorizontalScrollBarEnabled(false);
+        web.setInitialScale(100);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -103,14 +114,36 @@ public class MainActivity extends Activity {
         s.setAllowUniversalAccessFromFileURLs(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        s.setUseWideViewPort(false);
+        s.setLoadWithOverviewMode(false);
+        s.setSupportZoom(false);
+        s.setBuiltInZoomControls(false);
         web.setWebChromeClient(new WebChromeClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView v, String u) { sendDim(); }
+        });
         web.addJavascriptInterface(new Bridge(), "KiboNative");
         root.addView(web, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
 
+        // avisar a la interfaz del tamaño real de la pantalla cada vez que cambie (teclado, giro, barras...)
+        root.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override public void onLayoutChange(View v, int l, int t, int r, int bt,
+                                                 int oL, int oT, int oR, int oB) {
+                if ((r - l) != (oR - oL) || (bt - t) != (oB - oT)) sendDim();
+            }
+        });
+
         web.loadUrl("file:///android_asset/www/index.html");
         ui.postDelayed(tick, 500);
+    }
+
+    private void sendDim() {
+        if (root == null) return;
+        float d = getResources().getDisplayMetrics().density;
+        int w = root.getWidth(), h = root.getHeight();
+        if (w > 0 && h > 0) js("window.__dim&&window.__dim(" + (w / d) + "," + (h / d) + ")");
     }
 
     // ---------- teclas del control remoto / botón Atrás ----------
@@ -158,6 +191,26 @@ public class MainActivity extends Activity {
         if (f) hideBars();
     }
 
+    // ---------- imagen en imagen (superposición) ----------
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (!tv && pipOn && pl != null && prepared && pwr && Build.VERSION.SDK_INT >= 26) {
+            try {
+                enterPictureInPictureMode(new PictureInPictureParams.Builder()
+                        .setAspectRatio(new Rational(16, 9)).build());
+            } catch (Exception ignored) { }
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isIn, Configuration c) {
+        super.onPictureInPictureModeChanged(isIn, c);
+        inPip = isIn;
+        if (web != null) web.setVisibility(isIn ? View.INVISIBLE : View.VISIBLE);
+        applyRect();
+    }
+
     private void hideBars() {
         if (Build.VERSION.SDK_INT >= 30) {
             getWindow().setDecorFitsSystemWindows(false);
@@ -183,9 +236,23 @@ public class MainActivity extends Activity {
     }
 
     // ---------- reproductor ----------
+    private void applyRect() {
+        int x = rx, y = ry, w = rw, h = rh;
+        if (inPip && root != null) { x = 0; y = 0; w = root.getWidth(); h = root.getHeight(); }
+        if (vw > 0 && vh > 0 && w > 0 && h > 0) {
+            float va = (float) vw / vh, ra = (float) w / h;
+            if (va > ra) { int nh = Math.round(w / va); y += (h - nh) / 2; h = nh; }
+            else { int nw = Math.round(h * va); x += (w - nw) / 2; w = nw; }
+        }
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.max(1, w), Math.max(1, h));
+        lp.leftMargin = x;
+        lp.topMargin = y;
+        sv.setLayoutParams(lp);
+        sv.setVisibility(View.VISIBLE);
+    }
+
     private void releaseP() {
         if (pl != null) {
-            pv.setPlayer(null);
             pl.release();
             pl = null;
         }
@@ -193,6 +260,8 @@ public class MainActivity extends Activity {
         pwr = false;
         stateStr = "IDLE";
         durMs = 0;
+        vw = 0;
+        vh = 0;
         tracksJson = "[]";
         trk.clear();
     }
@@ -210,7 +279,11 @@ public class MainActivity extends Activity {
         DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
                 .setAllowCrossProtocolRedirects(true)
                 .setUserAgent("Kibo IPTV");
-        pl = new ExoPlayer.Builder(this)
+        // el decodificador FFmpeg (si está) permite AC3/EAC3/DTS que muchos teléfonos no decodifican
+        DefaultRenderersFactory rf = new DefaultRenderersFactory(this)
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+                .setEnableDecoderFallback(true);
+        pl = new ExoPlayer.Builder(this, rf)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(http))
                 .setLoadControl(lc)
                 .build();
@@ -242,6 +315,11 @@ public class MainActivity extends Activity {
                 js("window.__av('err'," + JSONObject.quote(String.valueOf(err.getErrorCodeName())) + ")");
             }
             @Override public void onTracksChanged(Tracks t) { rebuildTracks(t); }
+            @Override public void onVideoSizeChanged(VideoSize v) {
+                vw = Math.round(v.width * (v.pixelWidthHeightRatio > 0 ? v.pixelWidthHeightRatio : 1f));
+                vh = v.height;
+                applyRect();
+            }
             @Override public void onCues(CueGroup g) {
                 StringBuilder sb = new StringBuilder();
                 for (Cue c : g.cues) {
@@ -251,7 +329,7 @@ public class MainActivity extends Activity {
                 js("window.__av('sub'," + (txt.isEmpty() ? 1 : 60000) + "," + JSONObject.quote(txt) + ")");
             }
         });
-        pv.setPlayer(pl);
+        pl.setVideoSurfaceView(sv);
         pl.setMediaItem(MediaItem.fromUri(url));
         pl.setPlayWhenReady(false);
     }
@@ -265,13 +343,13 @@ public class MainActivity extends Activity {
                 int type = g.getType();
                 if (type != C.TRACK_TYPE_AUDIO && type != C.TRACK_TYPE_TEXT) continue;
                 for (int i = 0; i < g.length; i++) {
-                    if (!g.isTrackSupported(i)) continue;
                     Format f = g.getTrackFormat(i);
                     JSONObject e = new JSONObject();
                     e.put("language", f.language == null ? "" : f.language);
                     e.put("label", f.label == null ? "" : f.label);
                     e.put("channels", f.channelCount > 0 ? f.channelCount : 0);
                     e.put("codec", f.sampleMimeType == null ? "" : f.sampleMimeType);
+                    e.put("supported", g.isTrackSupported(i));
                     JSONObject o = new JSONObject();
                     o.put("index", idx);
                     o.put("type", type == C.TRACK_TYPE_AUDIO ? "AUDIO" : "TEXT");
@@ -283,6 +361,7 @@ public class MainActivity extends Activity {
             }
         } catch (JSONException ignored) { }
         tracksJson = arr.toString();
+        js("window.__av('trk')");
     }
 
     private void selectP(int idx) {
@@ -321,14 +400,12 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void rect(final int x, final int y, final int w, final int h) {
             ui.post(new Runnable() { public void run() {
-                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.max(1, w), Math.max(1, h));
-                lp.leftMargin = x;
-                lp.topMargin = y;
-                pv.setLayoutParams(lp);
-                pv.setVisibility(View.VISIBLE);
+                rx = x; ry = y; rw = Math.max(1, w); rh = Math.max(1, h);
+                applyRect();
             } });
         }
         @JavascriptInterface public void buffer(int sec) { bufSec = sec; }
+        @JavascriptInterface public void setPip(boolean on) { pipOn = on; }
         @JavascriptInterface public void select(String type, final int idx) {
             ui.post(new Runnable() { public void run() { selectP(idx); } });
         }

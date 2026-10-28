@@ -22,7 +22,9 @@
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout|uiMode|navigation"
             android:exported="true"
+            android:resizeableActivity="true"
             android:screenOrientation="sensorLandscape"
+            android:supportsPictureInPicture="true"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
