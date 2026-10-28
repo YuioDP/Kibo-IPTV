@@ -41,3 +41,4 @@ jobs:
         with:
           name: Kibo-IPTV-apk
           path: android/app/build/outputs/apk/release/*.apk
+
