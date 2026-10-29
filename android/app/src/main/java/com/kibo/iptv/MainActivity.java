@@ -104,7 +104,6 @@ public class MainActivity extends Activity {
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
         web.setVerticalScrollBarEnabled(false);
         web.setHorizontalScrollBarEnabled(false);
-        web.setInitialScale(100);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -131,7 +130,7 @@ public class MainActivity extends Activity {
         root.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override public void onLayoutChange(View v, int l, int t, int r, int bt,
                                                  int oL, int oT, int oR, int oB) {
-                if ((r - l) != (oR - oL) || (bt - t) != (oB - oT)) sendDim();
+                if ((r - l) != (oR - oL) || (bt - t) != (oB - oT)) { sendDim(); if (inPip) applyRect(); }
             }
         });
 
@@ -209,6 +208,7 @@ public class MainActivity extends Activity {
         inPip = isIn;
         if (web != null) web.setVisibility(isIn ? View.INVISIBLE : View.VISIBLE);
         applyRect();
+        ui.postDelayed(new Runnable() { @Override public void run() { applyRect(); } }, 250);
     }
 
     private void hideBars() {

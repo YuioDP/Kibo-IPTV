@@ -114,3 +114,15 @@ html.phone .sb{position:absolute;top:200px;width:64px;height:730px;background:rg
 .sbh{position:absolute;left:10px;width:44px;background:rgba(255,255,255,.55);border-radius:20px}
 #sbc{left:576px}#list:not(.lv) #sbi{left:1824px}#list.lv #sbi{left:1374px}
 html.phone .pb{height:34px;border-radius:17px}html.phone .pb i{height:34px;border-radius:17px}
+
+html.android{background:linear-gradient(135deg,#0b1030,#1c2760)}
+html.android[data-v="lg"]{background:linear-gradient(135deg,#4a2fd8 0%,#9a4aa6 55%,#f2735f 100%)}
+html.android[data-v="play"],html.android[data-v="mini"]{background:transparent}
+html.android body,html.android body.lg{background:transparent;overflow:visible}
+html.android #b1,html.android #b2{left:-3000px;width:7920px}
+html.android #b3{left:-3000px;width:4440px}
+html.android #b4{width:3040px}
+html.phone .col,html.phone .col2{overflow-y:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+html.phone .col::-webkit-scrollbar,html.phone .col2::-webkit-scrollbar{display:none}
+.vs{width:1px}.vw{position:absolute;left:0;width:100%}.vr{height:338px;white-space:nowrap}
+html.phone .cfgc{height:650px;overflow-y:auto;touch-action:pan-y}
