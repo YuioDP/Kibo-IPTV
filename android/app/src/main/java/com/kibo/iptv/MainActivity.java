@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
     private int bufSec = 0;
     private boolean pipOn = true;
     private boolean inPip = false;
+    private int ar = 0; // 0 original, 1 16:9, 2 4:3, 3 estirar, 4 zoom
 
     // zona de video pedida por la interfaz (píxeles) y tamaño real del video
     private int rx = 0, ry = 0, rw = 1, rh = 1;
@@ -142,7 +143,7 @@ public class MainActivity extends Activity {
         if (root == null) return;
         float d = getResources().getDisplayMetrics().density;
         int w = root.getWidth(), h = root.getHeight();
-        if (w > 0 && h > 0) js("window.__dim&&window.__dim(" + (w / d) + "," + (h / d) + ")");
+        if (w > 0 && h > 0) js("window.__dim&&window.__dim(" + (w / d) + "," + (h / d) + "," + w + "," + h + ")");
     }
 
     // ---------- teclas del control remoto / botón Atrás ----------
@@ -239,9 +240,12 @@ public class MainActivity extends Activity {
     private void applyRect() {
         int x = rx, y = ry, w = rw, h = rh;
         if (inPip && root != null) { x = 0; y = 0; w = root.getWidth(); h = root.getHeight(); }
-        if (vw > 0 && vh > 0 && w > 0 && h > 0) {
-            float va = (float) vw / vh, ra = (float) w / h;
-            if (va > ra) { int nh = Math.round(w / va); y += (h - nh) / 2; h = nh; }
+        float va = (vw > 0 && vh > 0) ? (float) vw / vh : 0f;
+        if (ar == 1) va = 16f / 9f; else if (ar == 2) va = 4f / 3f;
+        if (ar != 3 && va > 0 && w > 0 && h > 0) {
+            float ra = (float) w / h;
+            boolean cover = (ar == 4);
+            if ((va > ra) != cover) { int nh = Math.round(w / va); y += (h - nh) / 2; h = nh; }
             else { int nw = Math.round(h * va); x += (w - nw) / 2; w = nw; }
         }
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.max(1, w), Math.max(1, h));
@@ -406,6 +410,9 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void buffer(int sec) { bufSec = sec; }
         @JavascriptInterface public void setPip(boolean on) { pipOn = on; }
+        @JavascriptInterface public void aspect(final int m) {
+            ui.post(new Runnable() { public void run() { ar = m; applyRect(); } });
+        }
         @JavascriptInterface public void select(String type, final int idx) {
             ui.post(new Runnable() { public void run() { selectP(idx); } });
         }

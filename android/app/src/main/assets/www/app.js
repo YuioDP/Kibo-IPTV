@@ -16,7 +16,7 @@ var FM={auto:'Automático',ts:'MPEG-TS (.ts)',m3u8:'HLS (.m3u8)'};
 var LG={spa:'Español',es:'Español',eng:'Inglés',en:'Inglés',por:'Portugués',fra:'Francés',fre:'Francés',ita:'Italiano',deu:'Alemán',ger:'Alemán',jpn:'Japonés',und:'Desconocido'};
 var HM=[['live',90,150,540,520,'#18b6a4,#2f4ccf'],['movie',690,150,540,520,'#ff5a36,#ff9f3a'],['series',1290,150,540,520,'#8b3ffc,#3a6bff'],['cfg',690,790,540,110,'#2c9c7a,#2c9c7a'],['out',1290,790,540,110,'#2c9c7a,#2c9c7a']];
 
-function show(v){S.view=v;['login','users','home','list','det','cfg','play'].forEach(function(x){$(x).className='v'+(x==v?' on':'')});var c=v=='play'?'play':(v=='login'||v=='users'?'lg':'');if(v=='list'&&P.mini)c='mini';document.body.className=c;var bb=$('bkb');if(bb)bb.className=(v=='home'||v=='login')?'':'on'}
+function show(v){S.view=v;['login','users','home','list','det','cfg','play'].forEach(function(x){$(x).className='v'+(x==v?' on':'')});var c=v=='play'?'play':(v=='login'||v=='users'?'lg':'');if(v=='list'&&P.mini)c='mini';document.body.className=c;var bb=$('bkb');if(bb)bb.className=(v=='home'||v=='login'||v=='play')?'':'on'}
 function ask(){S.qo=1;S.qb=1;rq()}
 function rq(){var e=$('qd');e.style.display='block';e.innerHTML='<div class="qb"><h2>¿Salir de Kibo IPTV?</h2><div data-t="q:0" class="bn'+(S.qb==0?' f':'')+'">Sí</div><div data-t="q:1" class="bn'+(S.qb==1?' f':'')+'">No</div></div>'}
 function kq(k){if(k==37)S.qb=0;else if(k==39)S.qb=1;else if(k==13){if(S.qb==0){quit();return}S.qo=0;$('qd').style.display='none';return}else if(k==10009){S.qo=0;$('qd').style.display='none';return}rq()}
@@ -272,18 +272,19 @@ function ln(x){var j={};try{j=JSON.parse(x.extra_info)||{}}catch(e){}var f=null,
 for(k in j){if(/codec|fourcc|rate|channel|bit|index|track_num/i.test(k))continue;tk=String(j[k]).toLowerCase().split(/[^a-záéíóúñ]+/);for(i=0;i<tk.length&&!f;i++)if(KW[tk[i]])f=KW[tk[i]]}
 if(f)return f+(j.supported===false?' (sin soporte)':'');var sf=[String(j.fourCC||j.codec||'').trim(),j.channels?j.channels+'ch':''].filter(Boolean).join(' ');return'Pista '+(x.index+1)+(sf?' ('+sf+')':'')+(j.supported===false?' (sin soporte)':'')}
 function tk(){try{var av=webapis.avplay;P.a=[];P.s=[];var c={};av.getTotalTrackInfo().forEach(function(x){if(x.type!='AUDIO'&&x.type!='TEXT')return;var l=ln(x);c[x.type+l]=(c[x.type+l]||0)+1;var o={i:x.index,l:c[x.type+l]>1?l+' '+c[x.type+l]:l,x:x.extra_info};if(x.type=='AUDIO')P.a.push(o);else P.s.push(o)});P.ai=0;P.si=-1;av.setSilentSubtitle(true)}catch(e){}}
-function ui(n){P.ui=n;clearTimeout(P.ut);$('ov').style.display=n==1?'block':'none';$('gm').style.display=n>=2?'block':'none';
+function ui(n){P.ui=n;clearTimeout(P.ut);var bb=$('bkb'),ts=$('tbs'),pp=$('pp');if(S.view=='play'&&bb)bb.className=n?'on':'';if(ts)ts.className=(PH&&S.view=='play'&&n==1)?'on':'';if(pp&&n!=1)pp.className='';$('ov').style.display=n==1?'block':'none';$('gm').style.display=n>=2?'block':'none';
 if(n==1){rb();P.ut=setTimeout(function(){if(P.ui==1&&!P.g)ui(0)},5000)}else if(n>=2)rg()}
 function rb(){if(!P.it)return;var d=0;try{d=webapis.avplay.getDuration()}catch(e){}var t=P.sk!=null?P.sk:(P.t||0);
-$('ov').innerHTML='<h2>'+esc(P.it.name)+'</h2>'+(P.live?'':'<div class="pb"><i id="pbi"></i></div>')+'<div class="tm">'+(P.live?'EN VIVO':tf(t)+' / '+tf(d))+(P.paused?'   ·   PAUSA':'')+(PH?'':'   ·   Abajo: botones')+'<span class="bg">'+btns().map(function(b,i){return'<span data-t="g:'+(i+1)+'" class="gb'+(P.g==i+1?' f':'')+'">'+b+'</span>'}).join('')+'</span></div>';
-if(!P.live)$('pbi').style.width=(d?Math.min(100,t/d*100):0)+'%'}
-function opts(){if(P.ui==2)return['Audio','Subtítulos'].concat(P.live&&!P.it.url?['Formato']:[]);if(P.sm=='Audio')return P.a.length?P.a.map(function(x){return x.l}):['No disponible'];if(P.sm=='Subtítulos')return['Desactivados'].concat(P.s.map(function(x){return x.l}));if(P.sm=='Modo de subtítulos')return['Reproductor de la TV','Dibujados por la app'];return['MPEG-TS (.ts)','HLS (.m3u8)']}
-function cs(){return P.sm=='Audio'?P.ai:P.sm=='Subtítulos'?P.si+1:P.sm=='Modo de subtítulos'?(St.sm=='app'?1:0):(P.f=='ts'?0:1)}
+$('ov').innerHTML='<h2>'+esc(P.it.name)+'</h2>'+(P.live?'':'<div class="pb"><i id="pbi"></i></div>')+'<div class="tm">'+(P.live?'EN VIVO':tf(t)+' / '+tf(d))+(P.paused?'   ·   PAUSA':'')+(PH?'':'   ·   Abajo: botones')+'<span class="bg">'+btns().map(function(b,i){return(PH&&b=='AJUSTES')?'':'<span data-t="g:'+(i+1)+'" class="gb'+(P.g==i+1?' f':'')+'">'+b+'</span>'}).join('')+'</span></div>';
+if(!P.live)$('pbi').style.width=(d?Math.min(100,t/d*100):0)+'%';var ts=$('tbs'),pp=$('pp');if(ts)ts.setAttribute('data-t','g:'+btns().length);if(pp)pp.className=PH?(P.paused?'on pl':'on pa'):''}
+function opts(){if(P.ui==2)return['Audio','Subtítulos'].concat(P.live&&!P.it.url?['Formato']:[],window.KiboNative?['Formato de pantalla']:[]);if(P.sm=='Audio')return P.a.length?P.a.map(function(x){return x.l}):['No disponible'];if(P.sm=='Subtítulos')return['Desactivados'].concat(P.s.map(function(x){return x.l}));if(P.sm=='Modo de subtítulos')return['Reproductor de la TV','Dibujados por la app'];if(P.sm=='Formato de pantalla')return['Original','16:9','4:3','Estirar','Zoom (llenar)'];return['MPEG-TS (.ts)','HLS (.m3u8)']}
+function cs(){return P.sm=='Formato de pantalla'?(St.ar||0):P.sm=='Audio'?P.ai:P.sm=='Subtítulos'?P.si+1:P.sm=='Modo de subtítulos'?(St.sm=='app'?1:0):(P.f=='ts'?0:1)}
 function rg(){var a=opts(),sel=P.ui==2?-1:cs(),h='<h2>'+(P.ui==2?'Ajustes':P.sm)+'</h2>';a.forEach(function(x,i){h+='<div data-t="m:'+i+'" class="r'+(i==P.mi?' f':'')+'">'+(i==sel?'● ':'')+esc(x)+'</div>'});$('gm').innerHTML=h}
 function ap(){var av=webapis.avplay;
 if(P.ui==2){P.sm=opts()[P.mi];P.ui=3;P.mi=P.sm=='Audio'&&!P.a.length?0:cs();rg();return}
 try{if(P.sm=='Audio'&&P.a.length){P.ai=P.mi;swAudio(P.a[P.ai].i)}
 else if(P.sm=='Subtítulos'){P.si=P.mi-1;if(P.si>=0){av.setSilentSubtitle(false);av.setSelectTrack('TEXT',P.s[P.si].i)}else av.setSilentSubtitle(true);$('sub').textContent='';P.se=0;clearTimeout(P.sdt);if(P.si>=0){if(St.dbg)$('dbg').textContent='Pista '+P.s[P.si].l+' · '+P.s[P.si].x;P.sdt=setTimeout(function(){if(!P.se&&P.si>=0){try{webapis.avplay.setSilentSubtitle(true);webapis.avplay.setSelectTrack('TEXT',P.s[P.si].i)}catch(e){}P.sdt=setTimeout(function(){if(!P.se&&P.si>=0)toast('Aún no llegan subtítulos de esta pista',4000)},6000)}},6000)}else $('dbg').textContent=''}
+else if(P.sm=='Formato de pantalla'){St.ar=P.mi;sv();try{KiboNative.aspect(St.ar)}catch(e){}}
 else if(P.sm=='Modo de subtítulos'){St.sm=P.mi?'app':'tv';sv();if(P.si>=0)av.setSilentSubtitle(St.sm=='app')}
 else if(P.sm=='Formato'){var f=P.mi?'m3u8':'ts';if(St.fmt=='auto'){St.mem[P.it.id]=f;sv()}P.alt=1;ui(0);st(f);return}}catch(e){}
 P.ui=2;P.mi=0;rg()}
@@ -317,7 +318,7 @@ else if(S.view=='users'&&k=='u'){S.ui=+v;kusers(13)}
 else if(S.view=='cfg'&&k=='s'){S.c2=+v;kcfg(13)}
 else if(S.view=='det'&&k=='b'){S.det.b=+v;kdet(13)}
 else if(S.view=='list'){if(k=='c'){S.pane=0;S.ci=+v;if(S.eps){S.ii=0;rl()}else{S.tk++;S.items=[];S.msg='Cargando…';ldItems()}}else if(k=='i'){S.pane=1;S.ii=+v;pick()}}
-else if(S.view=='play'){if(k=='g'){P.g=+v;kplay(13)}else if(k=='m'){P.mi=+v;ap()}}}
+else if(S.view=='play'){if(k=='g'){P.g=+v;kplay(13)}else if(k=='m'){P.mi=+v;ap()}else if(k=='p'){tp();ui(1)}}}
 var LPT=null,LPF=0,TY=0,TC=null,LT=0,LS=0,TT=null,PB=null,SBD=null;
 document.addEventListener('click',function(e){if(LPF){LPF=0;return}var el=e.target,c=function(q){return el.closest?el.closest(q):null},t=c('[data-t]');
 if(t){tap(t.getAttribute('data-t'));return}
@@ -345,7 +346,7 @@ $('si').oninput=function(){S.q2=this.value;S.ii=0;rl()};
 $('sc').onfocus=function(){if(S.view=='list'&&S.pane!=2){S.pane=2;rl()}};$('si').onfocus=function(){if(S.view=='list'&&S.pane!=3){S.pane=3;rl()}};
 try{['MediaPlay','MediaPause','MediaPlayPause','MediaStop','MediaRewind','MediaFastForward','ColorF0Red','ChannelUp','ChannelDown'].forEach(function(n){try{tizen.tvinputdevice.registerKey(n)}catch(e){}})}catch(e){}
 
-if(window.KiboNative)KiboNative.setPip(St.pip?true:false);
+if(window.KiboNative){KiboNative.setPip(St.pip?true:false);KiboNative.aspect(St.ar||0)}
 document.addEventListener('visibilitychange',function(){if(!P.it)return;
 if(document.hidden){if(!P.hid){P.hid=1;P.rs=P.live?0:(P.t||0);P.n++;clearTimeout(P.to);clearTimeout(P.ut);try{webapis.avplay.stop();webapis.avplay.close()}catch(e){}}}
 else if(P.hid){P.hid=0;P.paused=0;st(P.f)}});
