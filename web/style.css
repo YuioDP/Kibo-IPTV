@@ -137,3 +137,8 @@ html.phone #pp.on{display:block;position:absolute;left:855px;top:450px;width:210
 #pp.on.pa::before{left:62px}#pp.on.pa::after{left:118px}
 #pp.on.pl::before{content:'';position:absolute;left:78px;top:60px;border-left:72px solid #e8e8e8;border-top:45px solid transparent;border-bottom:45px solid transparent}
 html.phone #ov .bg .gb{background:rgba(0,0,0,.65);border-color:rgba(255,255,255,.55)}
+
+#sk2{display:none}
+#sk2.on{display:block;position:absolute;top:430px;font-size:120px;font-weight:bold;color:#fff;text-shadow:0 0 14px #000,0 0 14px #000,0 0 6px #000;z-index:7}
+#sk2.l{left:240px}#sk2.r{right:240px}
+html.phone #ov .bg .gb{background:rgba(0,0,0,.72);border-color:#fff}

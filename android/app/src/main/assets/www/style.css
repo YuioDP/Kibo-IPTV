@@ -104,7 +104,7 @@ body.mini{background:transparent}
 #smp{position:absolute;left:70px;top:790px;width:1780px;text-align:center;color:#fff;text-shadow:0 0 6px #000,0 0 6px #000}
 
 #bkb,.sb{display:none}
-html.phone #bkb.on{display:block;position:absolute;left:20px;top:22px;width:210px;height:76px;line-height:68px;text-align:center;font-size:32px;font-weight:bold;background:rgba(0,0,0,.55);border:4px solid rgba(255,255,255,.7);border-radius:10px;z-index:25}
+html.phone #bkb.on{display:block;position:absolute;left:20px;top:18px;width:210px;height:92px;line-height:84px;text-align:center;font-size:40px;font-weight:bold;background:rgba(0,0,0,.55);border:4px solid rgba(255,255,255,.7);border-radius:14px;z-index:25}
 html.phone .top{left:270px;width:1580px}
 html.phone #hint,html.phone #cfg .note{display:none}
 html.phone .col{width:520px}
@@ -128,7 +128,7 @@ html.phone .col::-webkit-scrollbar,html.phone .col2::-webkit-scrollbar{display:n
 html.phone .cfgc{height:650px;overflow-y:auto;touch-action:pan-y}
 
 html.phone #tbs{display:none}
-html.phone #tbs.on{display:block;position:absolute;right:20px;top:22px;width:250px;height:76px;line-height:68px;text-align:center;font-size:32px;font-weight:bold;background:rgba(0,0,0,.55);border:4px solid rgba(255,255,255,.7);border-radius:10px;z-index:25}
+html.phone #tbs.on{display:block;position:absolute;right:20px;top:18px;width:250px;height:92px;line-height:84px;text-align:center;font-size:40px;font-weight:bold;background:rgba(0,0,0,.55);border:4px solid rgba(255,255,255,.7);border-radius:14px;z-index:25}
 html.phone #ov .bg{position:absolute;right:120px;top:-84px;float:none}
 html.phone #pi{display:none!important}
 #pp{display:none}
@@ -137,3 +137,8 @@ html.phone #pp.on{display:block;position:absolute;left:855px;top:450px;width:210
 #pp.on.pa::before{left:62px}#pp.on.pa::after{left:118px}
 #pp.on.pl::before{content:'';position:absolute;left:78px;top:60px;border-left:72px solid #e8e8e8;border-top:45px solid transparent;border-bottom:45px solid transparent}
 html.phone #ov .bg .gb{background:rgba(0,0,0,.65);border-color:rgba(255,255,255,.55)}
+
+#sk2{display:none}
+#sk2.on{display:block;position:absolute;top:430px;font-size:120px;font-weight:bold;color:#fff;text-shadow:0 0 14px #000,0 0 14px #000,0 0 6px #000;z-index:7}
+#sk2.l{left:240px}#sk2.r{right:240px}
+html.phone #ov .bg .gb{background:rgba(0,0,0,.72);border-color:#fff}

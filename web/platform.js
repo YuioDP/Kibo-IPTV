@@ -7,6 +7,7 @@ B.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;overflow:hid
 /* todo el diseño (1920x1080) va dentro de un "escenario" que se escala; así la página nunca desborda la pantalla */
 var ST=document.createElement('div');ST.id='stage';
 while(B.firstChild)ST.appendChild(B.firstChild);B.appendChild(ST);
+document.addEventListener('DOMContentLoaded',function(){[].slice.call(B.children).forEach(function(e){if(e!==ST&&e.tagName!='SCRIPT')ST.appendChild(e)})});
 var D=null;
 function fit(){var W=innerWidth||1920,Hh=innerHeight||1080,s=Math.min(W/1920,Hh/1080),x=(W-1920*s)/2,y=(Hh-1080*s)/2,k=(D&&D.pw&&W>0)?D.pw/W:(window.devicePixelRatio||1);
  if(!(k>0.5&&k<8))k=window.devicePixelRatio||1;

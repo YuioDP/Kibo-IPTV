@@ -15,6 +15,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -92,6 +93,13 @@ public class MainActivity extends Activity {
         tv = (um != null && um.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION)
                 || getPackageManager().hasSystemFeature("android.software.leanback");
 
+        if (Build.VERSION.SDK_INT >= 28) {
+            WindowManager.LayoutParams wlp = getWindow().getAttributes();
+            wlp.layoutInDisplayCutoutMode = (Build.VERSION.SDK_INT >= 30)
+                    ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                    : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(wlp);
+        }
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
 
