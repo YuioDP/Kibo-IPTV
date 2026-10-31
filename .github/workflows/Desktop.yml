@@ -1,0 +1,47 @@
+name: Compilar app de escritorio (Windows y Linux)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        working-directory: desktop
+        run: npm install
+
+      - name: Copiar la interfaz web y las librerías de video
+        working-directory: desktop
+        run: node prep.js
+
+      - name: Compilar para Windows
+        if: runner.os == 'Windows'
+        working-directory: desktop
+        run: npx electron-builder --win --publish never
+
+      - name: Compilar para Linux
+        if: runner.os == 'Linux'
+        working-directory: desktop
+        run: npx electron-builder --linux --publish never
+
+      - name: Guardar los archivos compilados
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kibo-IPTV-${{ matrix.os }}
+          path: |
+            desktop/dist/*.exe
+            desktop/dist/*.AppImage
+          if-no-files-found: warn
