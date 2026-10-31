@@ -1,0 +1,51 @@
+{
+  "name": "kibo-iptv",
+  "productName": "Kibo IPTV",
+  "version": "1.0.0",
+  "description": "Kibo IPTV - reproductor IPTV (Xtream Codes y M3U)",
+  "main": "main.js",
+  "author": {
+    "name": "Kibo",
+    "email": "kibo@example.com"
+  },
+  "license": "UNLICENSED",
+  "scripts": {
+    "prep": "node prep.js",
+    "start": "node prep.js && electron .",
+    "dist:win": "node prep.js && electron-builder --win --publish never",
+    "dist:linux": "node prep.js && electron-builder --linux --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "hls.js": "^1.5.17",
+    "mpegts.js": "^1.7.3"
+  },
+  "build": {
+    "appId": "com.kibo.iptv",
+    "productName": "Kibo IPTV",
+    "directories": { "output": "dist" },
+    "files": [ "main.js", "preload.js", "app/**/*", "build/icon.png" ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": [ "x64" ] },
+        { "target": "portable", "arch": [ "x64" ] }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "Kibo-IPTV-Instalador-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "Kibo-IPTV-Portable-${version}.exe"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "AudioVideo",
+      "target": [ "AppImage" ],
+      "artifactName": "Kibo-IPTV-${version}.AppImage"
+    }
+  }
+}

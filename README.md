@@ -28,3 +28,13 @@ Si falla, copia el error del registro de la ejecución.
   Ese componente tiene licencia GPLv3: está bien para uso personal; si compartes el APK públicamente, revisa esa licencia.
 - Imagen en imagen: al salir de la app con algo reproduciéndose, el video sigue en una ventana flotante
   (se activa/desactiva en Ajustes > "Imagen en imagen al salir de la app").
+
+## App de escritorio (Windows y Linux) - carpeta `desktop/`
+- Electron: la misma interfaz web dentro de una ventana propia, sin pasar por el navegador.
+- Windows: instalador de un clic (`Kibo-IPTV-Instalador-*.exe`) y `.exe` portable (`Kibo-IPTV-Portable-*.exe`). Linux: `.AppImage`.
+- Los datos (usuarios, favoritos, ajustes, guía) se guardan en la carpeta de usuario del sistema
+  (Windows: `%APPDATA%\Kibo IPTV`), no junto al .exe.
+- Para obtenerla sin instalar nada: sube el proyecto a GitHub y ejecuta Actions > "Compilar app de escritorio" > Run workflow.
+- `web/platform-web.js` hace que la misma interfaz funcione con el reproductor de un navegador (video + hls.js + mpegts.js).
+- Formatos: el navegador integrado no reproduce AC3/DTS ni algunos MKV; en el menú del reproductor hay "Abrir en VLC" para esos casos.
+- Tizen: si vuelves a empaquetar el .wgt, incluye `platform.js` y `platform-web.js` (no hacen nada en Samsung).
