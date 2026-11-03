@@ -24,13 +24,31 @@
   "build": {
     "appId": "com.kibo.iptv",
     "productName": "Kibo IPTV",
-    "directories": { "output": "dist" },
-    "files": [ "main.js", "preload.js", "app/**/*", "build/icon.png" ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "probe.js",
+      "app/**/*",
+      "build/icon.png"
+    ],
     "win": {
       "icon": "build/icon.png",
       "target": [
-        { "target": "nsis", "arch": [ "x64" ] },
-        { "target": "portable", "arch": [ "x64" ] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -44,8 +62,16 @@
     "linux": {
       "icon": "build/icon.png",
       "category": "AudioVideo",
-      "target": [ "AppImage" ],
+      "target": [
+        "AppImage"
+      ],
       "artifactName": "Kibo-IPTV-${version}.AppImage"
-    }
+    },
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ]
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
   }
 }

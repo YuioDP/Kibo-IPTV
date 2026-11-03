@@ -2,6 +2,9 @@ const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const http = require('http');
+const crypto = require('crypto');
+const { parseProbe } = require('./probe');
 
 // Nombre fijo: los datos (ajustes, favoritos, usuarios, guía) quedan en la carpeta de usuario del sistema
 // (Windows: %APPDATA%\Kibo IPTV, Linux: ~/.config/Kibo IPTV), nunca junto al .exe.
@@ -83,3 +86,78 @@ ipcMain.handle('kibo:vlc', (e, url) => new Promise((resolve) => {
   };
   tryNext(0);
 }));
+
+// ---------------- FFmpeg: pistas de audio, subtítulos y conversión (AC3/DTS/MKV -> algo que el navegador reproduce) ----------------
+function ffPath() {
+  let p = null;
+  try { p = require('ffmpeg-static'); } catch (e) { p = null; }
+  if (p && p.includes('app.asar')) p = p.replace('app.asar', 'app.asar.unpacked');
+  return (p && fs.existsSync(p)) ? p : null;
+}
+
+ipcMain.handle('kibo:probe', (e, url) => new Promise((resolve) => {
+  const f = ffPath();
+  if (!f) return resolve(null);
+  let err = '';
+  const p = spawn(f, ['-hide_banner', '-i', url], { windowsHide: true });
+  const to = setTimeout(() => { try { p.kill(); } catch (x) {} }, 25000);
+  p.stderr.on('data', (d) => { err += d; });
+  p.on('close', () => {
+    clearTimeout(to);
+    const r = parseProbe(err);
+    resolve((r.a.length || r.v.length) ? r : null);
+  });
+  p.on('error', () => { clearTimeout(to); resolve(null); });
+}));
+
+// Extrae un subtítulo de texto a WebVTT (lee el archivo completo, puede tardar).
+ipcMain.handle('kibo:vtt', (e, url, idx) => new Promise((resolve) => {
+  const f = ffPath();
+  if (!f) return resolve('');
+  let out = '';
+  const p = spawn(f, ['-hide_banner', '-loglevel', 'error', '-i', url, '-map', '0:' + idx, '-f', 'webvtt', 'pipe:1'],
+    { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+  const to = setTimeout(() => { try { p.kill(); } catch (x) {} }, 15 * 60 * 1000);
+  p.stdout.setEncoding('utf8');
+  p.stdout.on('data', (d) => { out += d; });
+  p.on('close', () => { clearTimeout(to); resolve(out); });
+  p.on('error', () => { clearTimeout(to); resolve(''); });
+}));
+
+// Servidor local (solo 127.0.0.1): entrega el video con el audio elegido convertido a AAC dentro de un MP4 fragmentado.
+const token = crypto.randomBytes(8).toString('hex');
+let srv = null;
+let srvPort = 0;
+
+function startServer() {
+  return new Promise((resolve) => {
+    if (srv) return resolve(srvPort);
+    srv = http.createServer((req, rsp) => {
+      const u = new URL(req.url, 'http://127.0.0.1');
+      if (u.pathname !== '/s' || u.searchParams.get('t') !== token) { rsp.statusCode = 403; return rsp.end(); }
+      const src = u.searchParams.get('u');
+      const a = u.searchParams.get('a');
+      const ss = parseFloat(u.searchParams.get('ss') || '0');
+      const vc = u.searchParams.get('v') || 'copy';
+      const f = ffPath();
+      if (!f || !src) { rsp.statusCode = 500; return rsp.end(); }
+      const args = ['-hide_banner', '-loglevel', 'error'];
+      if (ss > 0) args.push('-ss', String(ss));
+      args.push('-i', src, '-map', '0:v:0', '-map', '0:' + a, '-sn', '-dn');
+      if (vc === 'copy') args.push('-c:v', 'copy');
+      else args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p');
+      args.push('-c:a', 'aac', '-b:a', '192k', '-ac', '2',
+        '-movflags', 'frag_keyframe+empty_moov+default_base_moof', '-f', 'mp4', 'pipe:1');
+      const p = spawn(f, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+      rsp.writeHead(200, { 'Content-Type': 'video/mp4', 'Cache-Control': 'no-store' });
+      p.stdout.pipe(rsp);
+      const kill = () => { try { p.kill('SIGKILL'); } catch (x) {} };
+      req.on('close', kill);
+      rsp.on('close', kill);
+      p.on('close', () => { try { rsp.end(); } catch (x) {} });
+    });
+    srv.listen(0, '127.0.0.1', () => { srvPort = srv.address().port; resolve(srvPort); });
+  });
+}
+
+ipcMain.handle('kibo:stream', async () => ({ port: await startServer(), token, ok: !!ffPath() }));
