@@ -99,7 +99,7 @@ ipcMain.handle('kibo:probe', (e, url) => new Promise((resolve) => {
   const f = ffPath();
   if (!f) return resolve(null);
   let err = '';
-  const p = spawn(f, ['-hide_banner', '-i', url], { windowsHide: true });
+  const p = spawn(f, ['-hide_banner', '-analyzeduration', '3000000', '-probesize', '5000000', '-i', url], { windowsHide: true });
   const to = setTimeout(() => { try { p.kill(); } catch (x) {} }, 25000);
   p.stderr.on('data', (d) => { err += d; });
   p.on('close', () => {
@@ -143,7 +143,7 @@ function startServer() {
       if (!f || !src) { rsp.statusCode = 500; return rsp.end(); }
       const args = ['-hide_banner', '-loglevel', 'error'];
       if (ss > 0) args.push('-ss', String(ss));
-      args.push('-i', src, '-map', '0:v:0', '-map', '0:' + a, '-sn', '-dn');
+      args.push('-analyzeduration', '2000000', '-probesize', '3000000', '-i', src, '-map', '0:v:0', '-map', '0:' + a, '-sn', '-dn');
       if (vc === 'copy') args.push('-c:v', 'copy');
       else args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p');
       args.push('-c:a', 'aac', '-b:a', '192k', '-ac', '2',

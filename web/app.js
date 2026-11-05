@@ -16,7 +16,7 @@ var FM={auto:'Automático',ts:'MPEG-TS (.ts)',m3u8:'HLS (.m3u8)'};
 var LG={spa:'Español',es:'Español',eng:'Inglés',en:'Inglés',por:'Portugués',fra:'Francés',fre:'Francés',ita:'Italiano',deu:'Alemán',ger:'Alemán',jpn:'Japonés',und:'Desconocido'};
 var HM=[['live',90,150,540,520,'#18b6a4,#2f4ccf'],['movie',690,150,540,520,'#ff5a36,#ff9f3a'],['series',1290,150,540,520,'#8b3ffc,#3a6bff'],['cfg',690,790,540,110,'#2c9c7a,#2c9c7a'],['out',1290,790,540,110,'#2c9c7a,#2c9c7a']];
 
-function show(v){S.view=v;document.documentElement.classList.remove('nocur');['login','users','home','list','det','cfg','play'].forEach(function(x){$(x).className='v'+(x==v?' on':'')});var c=v=='play'?'play':(v=='login'||v=='users'?'lg':'');if(v=='list'&&P.mini)c='mini';document.body.className=c;var bb=$('bkb');if(bb)bb.className=(v=='home'||v=='login'||v=='play')?'':'on'}
+function show(v){S.view=v;document.documentElement.classList.remove('nocur');document.documentElement.classList.remove('ld');['login','users','home','list','det','cfg','play'].forEach(function(x){$(x).className='v'+(x==v?' on':'')});var c=v=='play'?'play':(v=='login'||v=='users'?'lg':'');if(v=='list'&&P.mini)c='mini';document.body.className=c;var bb=$('bkb');if(bb)bb.className=(v=='home'||v=='login'||v=='play')?'':'on'}
 function ask(){S.qo=1;S.qb=1;rq()}
 function rq(){var e=$('qd');e.style.display='block';e.innerHTML='<div class="qb"><h2>¿Salir de Kibo IPTV?</h2><div data-t="q:0" class="bn'+(S.qb==0?' f':'')+'">Sí</div><div data-t="q:1" class="bn'+(S.qb==1?' f':'')+'">No</div></div>'}
 function kq(k){if(k==37)S.qb=0;else if(k==39)S.qb=1;else if(k==13){if(S.qb==0){quit();return}S.qo=0;$('qd').style.display='none';return}else if(k==10009){S.qo=0;$('qd').style.display='none';return}rq()}
@@ -224,7 +224,7 @@ api('get_short_epg&stream_id='+x.id+'&limit=6',function(d){if(cur()[S.ii]!==x||S
 
 /* REPRODUCTOR */
 function link(it,f){if(it.url)return it.url;return C.base+'/'+it.t+'/'+encodeURIComponent(C.u)+'/'+encodeURIComponent(C.p)+'/'+it.id+'.'+(it.t=='live'?f:(it.ext||'mp4'))}
-function msg(t){P.st=t;var ld=(t=='Cargando…'),e=$('msg'),s=$('sp'),r=$('rt'),sh=ld&&((P.mini&&S.view=='list')||(!P.mini&&S.view=='play'));if(ld&&!P.ld)P.ls=Date.now();P.ld=ld;e.textContent=ld?'':t;e.style.display=t&&!ld&&!P.mini?'block':'none';s.className=r.className=P.mini?'m':'';s.style.display=r.style.display=sh?'block':'none';lt();rm()}
+function msg(t){P.st=t;var ld=(t=='Cargando…'),e=$('msg'),s=$('sp'),r=$('rt'),sh=ld&&((P.mini&&S.view=='list')||(!P.mini&&S.view=='play'));if(ld&&!P.ld)P.ls=Date.now();if(WB)document.documentElement.classList.toggle('ld',ld);P.ld=ld;e.textContent=ld?'':t;e.style.display=t&&!ld&&!P.mini?'block':'none';s.className=r.className=P.mini?'m':'';s.style.display=r.style.display=sh?'block':'none';lt();rm()}
 function lt(){var r=$('rt');if(P.it&&P.ld&&r.style.display=='block'){r.textContent=(P.sw?'Cambiando audio':(P.rt>0?'Reconectando '+P.rt:'Conectando'))+' ('+Math.floor((Date.now()-P.ls)/1000)+' s)'}}
 function sst(e){e.style.fontSize=St.ss+'px';e.style.color=SCL[St.sc][1];e.className=St.sb?'bgd':''}
 function cl(t){t=String(t==null?'':t);return t.replace(/\r/g,'').replace(/^\s*\d+,\d+,[^,]*,[^,]*,\d+,\d+,\d+,[^,]*,/,'').replace(/\{[^}]*\}/g,'').replace(/\\N/gi,'\n').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').trim()}

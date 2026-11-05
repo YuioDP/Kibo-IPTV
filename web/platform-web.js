@@ -91,7 +91,11 @@ var a={
  setListener:function(l){L=l||{}},
  prepareAsync:function(ok,err){pend={ok:ok,err:err};if(probeP){var u0=url;probeP.then(function(r){if(u0!==url)return;begin(r[0],(r[1]&&r[1].ok)?r[1]:null)})}},
  play:function(){var p=V.play();if(p&&p.catch)p.catch(function(){})},pause:function(){V.pause()},stop:function(){},close:function(){clean()},
- seekTo:function(ms,ok,err){clearTimeout(rst);var s=ms/1000;if(mode=='ts'&&info)restart(s);else{try{V.currentTime=s}catch(e){}}if(ok)setTimeout(ok,200)},
+ seekTo:function(ms,ok,err){clearTimeout(rst);var s=ms/1000;
+  if(mode=='ts'&&info){var bf=V.buffered,t=s-base,st=bf.length?bf.start(0):0,en=bf.length?bf.end(bf.length-1):0;
+   if(t>=st-0.1&&t<=en-0.5){try{V.currentTime=Math.max(0,t)}catch(e){}}else restart(s)}
+  else{try{V.currentTime=s}catch(e){}}
+  if(ok)setTimeout(ok,200)},
  getState:function(){return url?(V.paused?'PAUSED':'PLAYING'):'NONE'},
  getDuration:function(){var d=V.duration;if(mode=='ts'&&info&&info.dur)return Math.round(info.dur*1000);return(isFinite(d)&&d>0)?Math.round(d*1000):((info&&info.dur)?Math.round(info.dur*1000):0)},
  getTotalTrackInfo:function(){T=[];var out=[],n=0;

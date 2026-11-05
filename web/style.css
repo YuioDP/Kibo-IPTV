@@ -166,5 +166,25 @@ html.web .cl{display:inline-flex;align-items:center;margin-right:28px}
 .vs{display:inline-block;width:240px;height:16px;background:rgba(255,255,255,.3);border-radius:8px;margin:0 6px 0 4px;cursor:pointer}
 .vs i{display:block;width:100%;height:16px;background:#fff;border-radius:8px}
 html.web.nocur,html.web.nocur *{cursor:none!important}
-#skl,#skr,#pipb,#fsb,#vb,#vs{display:none}
+#skl,#skr,#pipb{display:none}
 html.web .ib,html.web .vs{display:inline-block}
+
+/* ---- escritorio: botones más pequeños, sin el icono antiguo de la TV ---- */
+html.web #pi{display:none!important}
+html.web.ld #pp.on{display:none}
+html.web #bkb.on{width:150px;height:60px;line-height:54px;font-size:26px;left:24px;top:20px;border-width:3px;border-radius:10px}
+html.web #pipb.on{width:330px;height:60px;line-height:54px;font-size:22px;left:795px;top:20px;border-width:3px;border-radius:10px}
+html.web #pp.on{width:130px;height:130px;left:895px;top:475px;border-width:3px}
+html.web #pp.on.pa::before,html.web #pp.on.pa::after{top:39px;width:18px;height:52px;border-radius:3px}
+html.web #pp.on.pa::before{left:38px}html.web #pp.on.pa::after{left:74px}
+html.web #pp.on.pl::before{left:50px;top:36px;border-left:44px solid #e8e8e8;border-top:29px solid transparent;border-bottom:29px solid transparent}
+html.web #skl.on,html.web #skr.on{width:96px;height:96px;top:492px;font-size:28px;line-height:88px;border-width:3px}
+html.web #skl.on{left:759px}html.web #skr.on{left:1065px}
+html.web #sk2.on{font-size:70px;top:480px}
+html.web .gb{height:44px;line-height:38px;padding:0 20px;font-size:24px;border-width:3px;border-radius:8px}
+html.web #ov h2{font-size:32px;margin-bottom:14px}
+html.web .tm{font-size:24px}
+html.web .ib{width:48px;height:48px;margin-right:4px}
+html.web .vs{width:170px;height:12px;border-radius:6px;margin:0 6px 0 2px}
+html.web .vs i{height:12px;border-radius:6px}
+html.web .pb{height:10px}html.web .pb i{height:10px}
