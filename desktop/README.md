@@ -26,3 +26,12 @@ Lo normal es dejar que GitHub Actions lo compile (.github/workflows/desktop.yml)
 ## Atajos y ratón
 Clic en el video: pausa/reanuda. Doble clic o F/F11: pantalla completa. Esc: atrás. Espacio: pausa. M: silenciar. R o clic derecho: favorito.
 Rueda sobre el video: volumen. Flechas izquierda/derecha: saltar. Av Pág/Re Pág: canal siguiente/anterior.
+
+## Saltos y sincronía (películas y series convertidas con FFmpeg)
+- El video convertido se guarda en memoria mientras se ve; saltar dentro de lo ya cargado es inmediato.
+- Un salto lejano abre el flujo en ese punto sin perder lo cargado antes.
+- Al iniciar en otro punto, audio y video empiezan juntos (opción -noaccurate_seek de FFmpeg), para evitar desfases.
+- Si el modo en memoria falla, se prueba el modo progresivo y, por último, la reproducción directa.
+
+## Listas
+Rueda del mouse, barra lateral arrastrable y teclado para recorrer categorías, canales, películas y series. Ajustes también se desplaza con la rueda.

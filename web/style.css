@@ -188,3 +188,17 @@ html.web .ib{width:48px;height:48px;margin-right:4px}
 html.web .vs{width:170px;height:12px;border-radius:6px;margin:0 6px 0 2px}
 html.web .vs i{height:12px;border-radius:6px}
 html.web .pb{height:10px}html.web .pb i{height:10px}
+
+html.web .cfgc{height:650px;overflow-y:auto;overflow-x:hidden}
+html.web .cfgc::-webkit-scrollbar{width:14px}
+html.web .cfgc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:7px}
+html.web .cfgc::-webkit-scrollbar-track{background:rgba(255,255,255,.08);border-radius:7px}
+
+/* ---- escritorio: listas con desplazamiento nativo y barra lateral arrastrable ---- */
+html.web .col,html.web .col2{overflow-y:auto;overflow-x:hidden}
+html.web .col::-webkit-scrollbar,html.web .col2::-webkit-scrollbar{display:none}
+html.web .col{width:520px}
+html.web #list:not(.lv) .col2{width:1170px}
+html.web #list.lv .col2{width:720px}
+html.web .sb{position:absolute;top:200px;width:30px;height:730px;background:rgba(255,255,255,.12);border-radius:15px;z-index:5;cursor:pointer}
+html.web .sbh{left:5px;width:20px;border-radius:10px}

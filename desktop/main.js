@@ -139,11 +139,16 @@ function startServer() {
       const a = u.searchParams.get('a');
       const ss = parseFloat(u.searchParams.get('ss') || '0');
       const vc = u.searchParams.get('v') || 'copy';
+      const copyts = u.searchParams.get('c') === '1';
       const f = ffPath();
       if (!f || !src) { rsp.statusCode = 500; return rsp.end(); }
       const args = ['-hide_banner', '-loglevel', 'error'];
       if (ss > 0) args.push('-ss', String(ss));
+      // -noaccurate_seek: audio y video empiezan en el mismo punto (evita el desfase tras saltar)
+      if (ss > 0) args.push('-noaccurate_seek');
+      if (/^https?:/i.test(src)) args.push('-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '3');
       args.push('-analyzeduration', '2000000', '-probesize', '3000000', '-i', src, '-map', '0:v:0', '-map', '0:' + a, '-sn', '-dn');
+      if (copyts) args.push('-copyts');
       if (vc === 'copy') args.push('-c:v', 'copy');
       else args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p');
       args.push('-c:a', 'aac', '-b:a', '192k', '-ac', '2',

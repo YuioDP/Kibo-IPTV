@@ -15,6 +15,10 @@ function parseProbe(txt) {
         title: '',
         def: /\(default\)/.test(rest)
       };
+      const pm = /^\w+\s*\(([^)]*)\)/.exec(rest);
+      if (pm) o.prof = pm[1];
+      const rm = /,\s*(\d{2,5})x(\d{2,5})/.exec(rest);
+      if (rm) { o.w = +rm[1]; o.h = +rm[2]; }
       if (m[3] === 'Audio') {
         const ch = /,\s*(mono|stereo|\d(?:\.\d)?(?:\([^)]*\))?)\s*,/.exec(rest);
         o.ch = ch ? ch[1] : '';
