@@ -124,7 +124,7 @@ html.android #b3{left:-3000px;width:4440px}
 html.android #b4{width:3040px}
 html.phone .col,html.phone .col2{overflow-y:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 html.phone .col::-webkit-scrollbar,html.phone .col2::-webkit-scrollbar{display:none}
-.vs{width:1px}.vw{position:absolute;left:0;width:100%}.vr{height:338px;white-space:nowrap}
+.vsp{width:1px}.vw{position:absolute;left:0;width:100%}.vr{height:338px;white-space:nowrap}
 html.phone .cfgc{height:650px;overflow-y:auto;touch-action:pan-y}
 
 html.phone #tbs{display:none}
@@ -202,3 +202,8 @@ html.web #list:not(.lv) .col2{width:1170px}
 html.web #list.lv .col2{width:720px}
 html.web .sb{position:absolute;top:200px;width:30px;height:730px;background:rgba(255,255,255,.12);border-radius:15px;z-index:5;cursor:pointer}
 html.web .sbh{left:5px;width:20px;border-radius:10px}
+
+/* sin selección de texto: es una aplicación, no una página */
+html.web,html.web *{-webkit-user-select:none;user-select:none}
+html.web input{-webkit-user-select:text;user-select:text}
+html.web img{-webkit-user-drag:none}

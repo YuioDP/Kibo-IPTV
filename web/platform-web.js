@@ -49,7 +49,7 @@ V.addEventListener('waiting',function(){L.onbufferingstart&&L.onbufferingstart()
 V.addEventListener('playing',function(){L.onbufferingcomplete&&L.onbufferingcomplete()});
 V.addEventListener('canplay',function(){L.onbufferingcomplete&&L.onbufferingcomplete()});
 V.addEventListener('ended',function(){L.onstreamcompleted&&L.onstreamcompleted()});
-V.addEventListener('error',function(){if(mode=='mse'){msFail();return}if(mode=='ts'&&!fell&&url){fell=true;mode='direct';base=0;V.src=url;return}fail('MEDIA_'+(V.error?V.error.code:0))});
+V.addEventListener('error',function(){if(mode=='mse'){msFail(curSS);return}if(mode=='ts'&&!fell&&url){fell=true;mode='direct';base=0;V.src=url;return}fail('MEDIA_'+(V.error?V.error.code:0))});
 setInterval(function(){if(url&&L.oncurrentplaytime)L.oncurrentplaytime(Math.round(curT()*1000))},500);
 /* --- FFmpeg (solo escritorio): decidir si se reproduce directo o convertido --- */
 function sUrl(ss,copy){return 'http://127.0.0.1:'+sv.port+'/s?t='+sv.token+'&u='+encodeURIComponent(url)+'&a='+info.a[ai].i+'&ss='+ss+'&v='+vc+(copy?'&c=1':'')}
@@ -62,7 +62,7 @@ function begin(i,s){info=i;sv=s;
  if(!i||!sv||!i.a.length||!i.v.length){info=(i&&sv)?i:null;mode='direct';V.src=url;return}
  mode=plan();ai=0;base=0;if(mode=='direct')V.src=url;else if(mseOK())mseOpen();else V.src=sUrl(0)}
 /* --- MSE: el video convertido se va guardando en memoria; saltar dentro de lo cargado es inmediato --- */
-var ms=null,sb=null,ctl=null,fid=0,aChg=false,msUrl='';
+var ms=null,sb=null,ctl=null,fid=0,aChg=false,msUrl='',curSS=0,gT=null;
 function mime(){var v=info.v[0]||{},c=v.codec||'',codec;
  if(vc==='x264'||c==='h264'){var pf=(vc==='x264')?'High':(v.prof||'High'),pr={'High':'6400','Main':'4D40','Constrained Baseline':'42E0','Baseline':'4200','High 10':'6E00','High 4:2:2':'7A00'}[pf]||'6400';codec='avc1.'+pr+((v.h>1080)?'33':'28')}
  else if(c==='hevc')codec='hvc1.1.6.L120.90';else if(c==='vp9')codec='vp09.00.10.08';else if(c==='av1')codec='av01.0.08M.08';else codec='avc1.640028';
@@ -70,19 +70,24 @@ function mime(){var v=info.v[0]||{},c=v.codec||'',codec;
 function mseOK(){try{return !!(window.MediaSource&&MediaSource.isTypeSupported(mime()))}catch(e){return false}}
 function inBuf(s){if(!sb)return false;try{var b=sb.buffered;for(var i=0;i<b.length;i++){if(s>=b.start(i)-0.05&&s<=b.end(i)-0.7)return true}}catch(e){}return false}
 function idle(fn){if(!sb)return;if(!sb.updating){fn();return}sb.addEventListener('updateend',function(){idle(fn)},{once:true})}
-function mseOpen(){mode='mse';ms=new MediaSource();msUrl=URL.createObjectURL(ms);V.src=msUrl;
- ms.addEventListener('sourceopen',function(){try{sb=ms.addSourceBuffer(mime());ms.duration=info.dur||0;sb.addEventListener('error',msFail);mseFeed(0,false)}catch(e){msFail()}},{once:true})}
-function mseClose(){fid++;if(ctl){try{ctl.abort()}catch(e){}ctl=null}sb=null;if(ms){try{if(ms.readyState=='open')ms.endOfStream()}catch(e){}ms=null}if(msUrl){try{URL.revokeObjectURL(msUrl)}catch(e){}msUrl=''}}
-function msFail(){if(mode!='mse')return;mseClose();mode='ts';fell=false;base=0;V.src=sUrl(0)}
-function mseFeed(ss,clear){if(!sb||!ms)return;var id=++fid;if(ctl){try{ctl.abort()}catch(e){}}ctl=new AbortController();
- try{sb.abort()}catch(e){}
- var go=function(){if(id!=fid)return;try{sb.timestampOffset=0}catch(e){}
-  fetch(sUrl(ss,true),{signal:ctl.signal}).then(function(r){if(!r.ok||!r.body)throw new Error('http');pump(r.body.getReader(),id)}).catch(function(e){if(id==fid&&e&&e.name!='AbortError')msFail()})};
- if(clear){idle(function(){try{sb.remove(0,1e9)}catch(e){}idle(go)})}else idle(go)}
+function mseOpen(){mode='mse';var r0=window.__resume?window.__resume():0;curSS=r0;ms=new MediaSource();msUrl=URL.createObjectURL(ms);V.src=msUrl;
+ ms.addEventListener('sourceopen',function(){try{sb=ms.addSourceBuffer(mime());ms.duration=info.dur||0;sb.addEventListener('error',function(){msFail(curSS)});if(r0>0){try{V.currentTime=r0}catch(e){}}mseFeed(r0,false)}catch(e){msFail(curSS)}},{once:true})}
+function mseClose(){fid++;clearTimeout(gT);if(ctl){try{ctl.abort()}catch(e){}ctl=null}sb=null;if(ms){try{if(ms.readyState=='open')ms.endOfStream()}catch(e){}ms=null}if(msUrl){try{URL.revokeObjectURL(msUrl)}catch(e){}msUrl=''}}
+function msFail(ss){ss=(typeof ss=='number')?ss:0;if(mode!='mse')return;mseClose();mode='ts';fell=false;base=ss;V.src=sUrl(ss)}
+function reopen(fn){if(!ms||!sb)return;if(ms.readyState=='ended'){try{sb.remove(0,0.001)}catch(e){}}
+ idle(function(){try{if(ms.duration<(info.dur||0))ms.duration=info.dur}catch(e){}fn()})}
+function mseFeed(ss,clear){if(!sb||!ms)return;var id=++fid;curSS=ss;clearTimeout(gT);
+ gT=setTimeout(function(){if(id==fid&&mode=='mse'&&!inBuf(ss+0.5))msFail(ss)},window.__guardMs||25000);
+ if(ctl){try{ctl.abort()}catch(e){}}ctl=new AbortController();
+ reopen(function(){if(id!=fid)return;try{sb.abort()}catch(e){}
+  try{if(Math.abs(V.currentTime-ss)>0.5)V.currentTime=ss}catch(e){}
+  var go=function(){if(id!=fid)return;try{sb.timestampOffset=ss}catch(e){}
+   fetch(sUrl(ss),{signal:ctl.signal}).then(function(r){if(!r.ok||!r.body)throw new Error('http');pump(r.body.getReader(),id)}).catch(function(e){if(id==fid&&e&&e.name!='AbortError')msFail(ss)})};
+  if(clear){idle(function(){try{sb.remove(0,1e9)}catch(e){}idle(go)})}else idle(go)})}
 function pump(rd,id){rd.read().then(function(r){if(id!=fid)return;
- if(r.done){idle(function(){try{if(ms&&ms.readyState=='open')ms.endOfStream()}catch(e){}});return}
- app(r.value,id,function(){wait(function(){pump(rd,id)},id)})}).catch(function(e){if(id==fid&&e&&e.name!='AbortError')msFail()})}
-function app(buf,id,cb){idle(function(){if(id!=fid)return;try{sb.appendBuffer(buf);sb.addEventListener('updateend',function(){cb()},{once:true})}catch(e){if(e&&e.name=='QuotaExceededError'){trim(true);setTimeout(function(){app(buf,id,cb)},400)}else msFail()}})}
+ if(r.done){idle(function(){try{if(ms&&ms.readyState=='open'&&info.dur&&curSS<info.dur-2){}else if(ms&&ms.readyState=='open')ms.endOfStream()}catch(e){}});return}
+ app(r.value,id,function(){wait(function(){pump(rd,id)},id)})}).catch(function(e){if(id==fid&&e&&e.name!='AbortError')msFail(curSS)})}
+function app(buf,id,cb){idle(function(){if(id!=fid)return;try{sb.appendBuffer(buf);sb.addEventListener('updateend',function(){cb()},{once:true})}catch(e){if(e&&e.name=='QuotaExceededError'){trim(true);setTimeout(function(){app(buf,id,cb)},400)}else msFail(curSS)}})}
 function trim(force){if(!sb||sb.updating)return;try{var b=sb.buffered;if(!b.length)return;var t=V.currentTime,st=b.start(0);if(t-st>(force?20:90)){sb.remove(st,t-(force?10:45))}}catch(e){}}
 function wait(fn,id){if(id!=fid)return;var ahead=0;try{var b=sb.buffered;for(var i=0;i<b.length;i++){if(V.currentTime>=b.start(i)-0.1&&V.currentTime<=b.end(i)+0.1)ahead=b.end(i)-V.currentTime}}catch(e){}
  trim(false);if(ahead>120)setTimeout(function(){wait(fn,id)},700);else fn()}
@@ -117,7 +122,7 @@ var a={
  prepareAsync:function(ok,err){pend={ok:ok,err:err};if(probeP){var u0=url;probeP.then(function(r){if(u0!==url)return;begin(r[0],(r[1]&&r[1].ok)?r[1]:null)})}},
  play:function(){var p=V.play();if(p&&p.catch)p.catch(function(){})},pause:function(){V.pause()},stop:function(){},close:function(){clean()},
  seekTo:function(ms,ok,err){clearTimeout(rst);var s=ms/1000;
-  if(mode=='mse'){if(aChg){aChg=false;try{V.currentTime=s}catch(e){}mseFeed(s,true)}else if(inBuf(s)){try{V.currentTime=s}catch(e){}}else{try{V.currentTime=s}catch(e){}mseFeed(s,false)}}
+  if(mode=='mse'){if(!aChg&&Math.abs(s-curSS)<1.5&&!inBuf(s)){try{V.currentTime=s}catch(e){}}else if(aChg){aChg=false;try{V.currentTime=s}catch(e){}mseFeed(s,true)}else if(inBuf(s)){try{V.currentTime=s}catch(e){}}else{try{V.currentTime=s}catch(e){}mseFeed(s,false)}}
   else if(mode=='ts'&&info){var bf=V.buffered,t=s-base,st=bf.length?bf.start(0):0,en=bf.length?bf.end(bf.length-1):0;
    if(t>=st-0.1&&t<=en-0.5){try{V.currentTime=Math.max(0,t)}catch(e){}}else restart(s)}
   else{try{V.currentTime=s}catch(e){}}
