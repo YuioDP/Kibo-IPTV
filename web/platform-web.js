@@ -58,7 +58,7 @@ function plan(){var l=url.split('?')[0].toLowerCase(),mp4=/\.(mp4|m4v)$/.test(l)
  var hevcOk=vcd=='hevc'&&V.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"');
  var vOk=vcd=='h264'||vcd=='vp9'||vcd=='av1'||!!hevcOk;
  vc=vOk?'copy':'x264';return(mp4&&!needA&&vOk)?'direct':'ts'}
-function begin(i,s){info=i;sv=s;
+function begin(i,s){try{console.log('[Kibo] pistas:',JSON.stringify(i&&{dur:i.dur,v:i.v,a:i.a,s:i.s}),'| ffmpeg:',!!s)}catch(e){}info=i;sv=s;
  if(!i||!sv||!i.a.length||!i.v.length){info=(i&&sv)?i:null;mode='direct';V.src=url;return}
  mode=plan();ai=0;base=0;if(mode=='direct')V.src=url;else if(mseOK())mseOpen();else V.src=sUrl(0)}
 /* --- MSE: el video convertido se va guardando en memoria; saltar dentro de lo cargado es inmediato --- */
@@ -70,7 +70,7 @@ function mime(){var v=info.v[0]||{},c=v.codec||'',codec;
 function mseOK(){try{return !!(window.MediaSource&&MediaSource.isTypeSupported(mime()))}catch(e){return false}}
 function inBuf(s){if(!sb)return false;try{var b=sb.buffered;for(var i=0;i<b.length;i++){if(s>=b.start(i)-0.05&&s<=b.end(i)-0.7)return true}}catch(e){}return false}
 function idle(fn){if(!sb)return;if(!sb.updating){fn();return}sb.addEventListener('updateend',function(){idle(fn)},{once:true})}
-function mseOpen(){mode='mse';var r0=window.__resume?window.__resume():0;curSS=r0;ms=new MediaSource();msUrl=URL.createObjectURL(ms);V.src=msUrl;
+function mseOpen(ss0){mode='mse';var r0=(typeof ss0=='number')?ss0:(window.__resume?window.__resume():0);curSS=r0;ms=new MediaSource();msUrl=URL.createObjectURL(ms);V.src=msUrl;
  ms.addEventListener('sourceopen',function(){try{sb=ms.addSourceBuffer(mime());ms.duration=info.dur||0;sb.addEventListener('error',function(){msFail(curSS)});if(r0>0){try{V.currentTime=r0}catch(e){}}mseFeed(r0,false)}catch(e){msFail(curSS)}},{once:true})}
 function mseClose(){fid++;clearTimeout(gT);if(ctl){try{ctl.abort()}catch(e){}ctl=null}sb=null;if(ms){try{if(ms.readyState=='open')ms.endOfStream()}catch(e){}ms=null}if(msUrl){try{URL.revokeObjectURL(msUrl)}catch(e){}msUrl=''}}
 function msFail(ss){ss=(typeof ss=='number')?ss:0;if(mode!='mse')return;mseClose();mode='ts';fell=false;base=ss;V.src=sUrl(ss)}
@@ -122,7 +122,7 @@ var a={
  prepareAsync:function(ok,err){pend={ok:ok,err:err};if(probeP){var u0=url;probeP.then(function(r){if(u0!==url)return;begin(r[0],(r[1]&&r[1].ok)?r[1]:null)})}},
  play:function(){var p=V.play();if(p&&p.catch)p.catch(function(){})},pause:function(){V.pause()},stop:function(){},close:function(){clean()},
  seekTo:function(ms,ok,err){clearTimeout(rst);var s=ms/1000;
-  if(mode=='mse'){if(!aChg&&Math.abs(s-curSS)<1.5&&!inBuf(s)){try{V.currentTime=s}catch(e){}}else if(aChg){aChg=false;try{V.currentTime=s}catch(e){}mseFeed(s,true)}else if(inBuf(s)){try{V.currentTime=s}catch(e){}}else{try{V.currentTime=s}catch(e){}mseFeed(s,false)}}
+  if(mode=='mse'){if(!aChg&&Math.abs(s-curSS)<1.5&&!inBuf(s)){try{V.currentTime=s}catch(e){}}else if(aChg){aChg=false;mseClose();mseOpen(s)}else if(inBuf(s)){try{V.currentTime=s}catch(e){}}else{try{V.currentTime=s}catch(e){}mseFeed(s,false)}}
   else if(mode=='ts'&&info){var bf=V.buffered,t=s-base,st=bf.length?bf.start(0):0,en=bf.length?bf.end(bf.length-1):0;
    if(t>=st-0.1&&t<=en-0.5){try{V.currentTime=Math.max(0,t)}catch(e){}}else restart(s)}
   else{try{V.currentTime=s}catch(e){}}
@@ -139,7 +139,7 @@ var a={
   var tt=V.textTracks;for(var j=0;j<tt.length;j++){if(tt[j].kind=='metadata')continue;T.push({t:'T',n:j});out.push({index:n++,type:'TEXT',extra_info:JSON.stringify({language:tt[j].language||'',label:tt[j].label||'',supported:true})})}
   textTracks();return out},
  setSelectTrack:function(type,idx){var e=T[idx];if(!e)return;
-  if(e.t=='A'){if(e.k!=ai){ai=e.k;if(mode=='mse'){aChg=true;clearTimeout(rst);rst=setTimeout(function(){aChg=false;mseFeed(V.currentTime,true)},450)}else if(mode=='ts'){clearTimeout(rst);rst=setTimeout(function(){restart(curT())},450)}}}
+  if(e.t=='A'){if(e.k!=ai){ai=e.k;if(mode=='mse'){aChg=true;clearTimeout(rst);rst=setTimeout(function(){aChg=false;mseClose();mseOpen(V.currentTime)},450)}else if(mode=='ts'){clearTimeout(rst);rst=setTimeout(function(){restart(curT())},450)}}}
   else if(e.t=='S'){loadSubs(e)}
   else if(e.t=='H'){if(hls)hls.audioTrack=e.h}
   else if(e.t=='N'){for(var i=0;i<V.audioTracks.length;i++)V.audioTracks[i].enabled=(i==e.n)}

@@ -207,3 +207,5 @@ html.web .sbh{left:5px;width:20px;border-radius:10px}
 html.web,html.web *{-webkit-user-select:none;user-select:none}
 html.web input{-webkit-user-select:text;user-select:text}
 html.web img{-webkit-user-drag:none}
+
+.rl{display:inline-block;vertical-align:middle;margin:0 34px 0 4px;font-size:28px;color:#dff;white-space:nowrap}

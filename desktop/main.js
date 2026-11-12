@@ -42,6 +42,10 @@ function createWindow() {
     }
   });
   Menu.setApplicationMenu(null);
+  // F12 abre las herramientas de desarrollo (útil para diagnosticar)
+  win.webContents.on('before-input-event', (e, input) => {
+    if (input.type === 'keyDown' && input.key === 'F12') win.webContents.toggleDevTools();
+  });
   win.loadFile(path.join(__dirname, 'app', 'index.html'));
   win.once('ready-to-show', () => win.show());
   win.on('closed', () => { win = null; });
@@ -99,7 +103,7 @@ ipcMain.handle('kibo:probe', (e, url) => new Promise((resolve) => {
   const f = ffPath();
   if (!f) return resolve(null);
   let err = '';
-  const p = spawn(f, ['-hide_banner', '-analyzeduration', '3000000', '-probesize', '5000000', '-i', url], { windowsHide: true });
+  const p = spawn(f, ['-hide_banner', '-analyzeduration', '10000000', '-probesize', '20000000', '-i', url], { windowsHide: true });
   const to = setTimeout(() => { try { p.kill(); } catch (x) {} }, 25000);
   p.stderr.on('data', (d) => { err += d; });
   p.on('close', () => {
