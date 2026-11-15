@@ -35,3 +35,8 @@ Rueda sobre el video: volumen. Flechas izquierda/derecha: saltar. Av Pág/Re Pá
 
 ## Listas
 Rueda del mouse, barra lateral arrastrable y teclado para recorrer categorías, canales, películas y series. Ajustes también se desplaza con la rueda.
+
+## Subtítulos (cómo funcionan en escritorio)
+Al elegir un subtítulo de texto, FFmpeg extrae por tramos de 10 minutos desde el punto donde estás viendo, y los subtítulos van apareciendo a medida que salen (no hace falta esperar a leer toda la película). Al acercarte al final del tramo se pide el siguiente; si saltas fuera de lo extraído, se reinicia desde ahí.
+Mientras se extraen, se usa una segunda conexión al servidor IPTV. Si tu proveedor limita conexiones simultáneas, podría cortar una de ellas.
+F12 abre las herramientas de desarrollo; en la consola aparece "[Kibo] pistas:" con lo que FFmpeg detectó en cada película.

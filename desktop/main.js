@@ -128,6 +128,30 @@ ipcMain.handle('kibo:vtt', (e, url, idx) => new Promise((resolve) => {
   p.on('error', () => { clearTimeout(to); resolve(''); });
 }));
 
+// Subtítulos por tramos: extrae un fragmento (desde ss, durante dur segundos) y lo envía a medida que sale.
+const vtts = new Map();
+ipcMain.handle('kibo:vttStart', (e, id, url, idx, ss, dur) => {
+  const f = ffPath();
+  if (!f) return false;
+  const args = ['-hide_banner', '-loglevel', 'error'];
+  if (ss > 0) args.push('-ss', String(ss));
+  if (/^https?:/i.test(url)) args.push('-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '3');
+  args.push('-i', url, '-map', '0:' + idx, '-t', String(dur), '-f', 'webvtt', 'pipe:1');
+  const p = spawn(f, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+  vtts.set(id, p);
+  const sender = e.sender;
+  p.stdout.setEncoding('utf8');
+  p.stdout.on('data', (d) => { if (!sender.isDestroyed()) sender.send('kibo:vttData', id, d); });
+  const end = () => { vtts.delete(id); if (!sender.isDestroyed()) sender.send('kibo:vttEnd', id); };
+  p.on('close', end);
+  p.on('error', end);
+  return true;
+});
+ipcMain.on('kibo:vttStop', (e, id) => {
+  const p = vtts.get(id);
+  if (p) { try { p.kill('SIGKILL'); } catch (x) {} vtts.delete(id); }
+});
+
 // Servidor local (solo 127.0.0.1): entrega el video con el audio elegido convertido a AAC dentro de un MP4 fragmentado.
 const token = crypto.randomBytes(8).toString('hex');
 let srv = null;

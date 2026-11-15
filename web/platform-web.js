@@ -40,7 +40,7 @@ function lay(){var b=box,va=V.videoWidth&&V.videoHeight?V.videoWidth/V.videoHeig
  var s=V.style;s.left=x+'px';s.top=y+'px';s.width=w+'px';s.height=h+'px';s.objectFit=(va>0&&ar!=3)?'fill':'contain'}
 function clean(){if(hls){try{hls.destroy()}catch(e){}hls=null}if(mp){try{mp.destroy()}catch(e){}mp=null}
  try{V.pause()}catch(e){}V.removeAttribute('src');try{V.load()}catch(e){}
- mseClose();T=[];url='';info=null;mode='direct';ai=0;base=0;probeP=null;fell=false;clearTimeout(rst);cues=[];lastTxt='';clearInterval(cuT)}
+ mseClose();T=[];url='';info=null;mode='direct';ai=0;base=0;probeP=null;fell=false;clearTimeout(rst);cues=[];lastTxt='';clearInterval(cuT);subStop();sx.e=null;window.__subpend=false}
 function fail(c){var q=pend;pend=null;if(q&&q.err)q.err(c);else if(L.onerror)L.onerror(c)}
 function trk(){if(window.__trk)window.__trk()}
 V.addEventListener('loadedmetadata',function(){lay();var p=pend;pend=null;if(p&&p.ok)p.ok();trk()});
@@ -94,13 +94,24 @@ function wait(fn,id){if(id!=fid)return;var ahead=0;try{var b=sb.buffered;for(var
 function restart(s){base=Math.max(0,s);var was=V.paused;V.src=sUrl(base);if(!was){var p=V.play();if(p&&p.catch)p.catch(function(){})}}
 /* --- subtítulos extraídos a WebVTT --- */
 function tsec(s){var p=s.trim().split(':').reverse();return(+(p[0]||'0').replace(',','.'))+(p[1]?+p[1]*60:0)+(p[2]?+p[2]*3600:0)}
-function parseVtt(t){var out=[];(t||'').replace(/\r/g,'').split(/\n\n+/).forEach(function(b){var ls=b.split('\n'),i=0;while(i<ls.length&&ls[i].indexOf('-->')<0)i++;if(i>=ls.length)return;
- var m=ls[i].split('-->'),s=tsec(m[0]),e=tsec(m[1].trim().split(' ')[0]),tx=ls.slice(i+1).join('\n').replace(/<[^>]+>/g,'').trim();if(tx)out.push({s:s,e:e,t:tx})});return out}
-function startCues(){clearInterval(cuT);cuT=setInterval(function(){if(!cues.length||!L.onsubtitlechange)return;var t=curT(),txt='';
+function parseVtt(t,off){off=off||0;var out=[];(t||'').replace(/\r/g,'').split(/\n\n+/).forEach(function(b){var ls=b.split('\n'),i=0;while(i<ls.length&&ls[i].indexOf('-->')<0)i++;if(i>=ls.length)return;
+ var m=ls[i].split('-->'),s=tsec(m[0]),e=tsec(m[1].trim().split(' ')[0]),tx=ls.slice(i+1).join('\n').replace(/<[^>]+>/g,'').trim();if(tx)out.push({s:s+off,e:e+off,t:tx})});return out}
+var SUBCH=600,sx={e:null,id:0,from:0,to:0,run:false,tail:''};
+function subStop(){if(sx.run&&window.KiboDesktop&&KiboDesktop.vttStop)KiboDesktop.vttStop(sx.id);sx.run=false}
+function subChunk(ss){var id=sx.id,first=true;sx.run=true;sx.tail='';sx.to=ss+SUBCH;
+ KiboDesktop.vttStart(id,url,sx.e.i,ss,SUBCH,function(ev,d){if(id!=sx.id)return;
+  if(ev=='data'){sx.tail+=d;var i=sx.tail.lastIndexOf('\n\n');if(i<0)return;var ch=sx.tail.slice(0,i);sx.tail=sx.tail.slice(i+2);
+   var n=parseVtt(ch,ss);if(n.length){cues=cues.concat(n);if(first){first=false;window.__subpend=false;window.__msg&&window.__msg('Subtítulos listos')}}}
+  else{if(sx.tail.trim()){var n2=parseVtt(sx.tail,ss);if(n2.length)cues=cues.concat(n2)}sx.run=false;window.__subpend=false}})}
+function subStart(e,t){subStop();sx.e=e;sx.id++;sx.from=t;cues=[];lastTxt='';window.__subpend=true;subChunk(t)}
+function startCues(){clearInterval(cuT);cuT=setInterval(function(){
+ if(sx.e&&info){var t0=curT();if(t0<sx.from-1||t0>sx.to+30)subStart(sx.e,t0);else if(!sx.run&&t0>sx.to-120&&sx.to<(info.dur||0))subChunk(sx.to)}
+ if(!cues.length||!L.onsubtitlechange)return;var t=curT(),txt='';
  for(var i=0;i<cues.length;i++){if(cues[i].s<=t&&t<cues[i].e){txt=cues[i].t;break}}
  if(txt!==lastTxt){lastTxt=txt;L.onsubtitlechange(txt?'60000':'1',txt,'0',[])}},200)}
 function loadSubs(e){cues=[];lastTxt='';
  if(!e.ok){window.__msg&&window.__msg('Ese subtítulo es de imagen y no se puede mostrar');return}
+ if(KiboDesktop.vttStart){window.__msg&&window.__msg('Cargando subtítulos…');startCues();subStart(e,curT());return}
  window.__msg&&window.__msg('Extrayendo subtítulos… puede tardar un poco');var u0=url;
  KiboDesktop.vtt(url,e.i).then(function(t){if(u0!==url)return;cues=parseVtt(t);window.__msg&&window.__msg(cues.length?'Subtítulos listos':'No se pudieron extraer los subtítulos');startCues()})}
 function textTracks(){var tt=V.textTracks;for(var i=0;i<tt.length;i++){tt[i].oncuechange=function(){if(L.onsubtitlechange){var o=[],ts=V.textTracks;for(var a=0;a<ts.length;a++){if(ts[a].mode=='hidden'&&ts[a].activeCues)for(var j=0;j<ts[a].activeCues.length;j++)o.push(ts[a].activeCues[j].text)}var t=o.join('\n');L.onsubtitlechange(t?'60000':'1',t,'0',[])}}}}
