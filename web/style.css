@@ -209,3 +209,13 @@ html.web input{-webkit-user-select:text;user-select:text}
 html.web img{-webkit-user-drag:none}
 
 .rl{display:inline-block;vertical-align:middle;margin:0 34px 0 4px;font-size:28px;color:#dff;white-space:nowrap}
+
+/* subtítulos: suben cuando aparece la barra o el menú, para poder leerse */
+#sub{transition:bottom .15s}
+#play.ctl #sub{bottom:260px}
+#play.ctm #sub{bottom:470px}
+html.web #play.ctl #sub{bottom:215px}
+html.phone #play.ctl #sub{bottom:340px}
+/* botón para cerrar el menú de ajustes del reproductor */
+.gx{position:absolute;right:20px;top:14px;padding:0 22px;height:52px;line-height:46px;font-size:26px;font-weight:bold;border:3px solid rgba(255,255,255,.65);border-radius:8px;cursor:pointer}
+html.web .gx{height:44px;line-height:38px;font-size:22px}
